@@ -48,15 +48,16 @@ let send t ?(expect=Any) str =
 let spawn process = 
   let read, write = Unix.open_process process in 
   let lwt_read = 
-    Lwt_io.of_unix_fd ~mode:Lwt_io.Input 
-      ~close:(fun () -> Lwt.return @@ ignore @@ Unix.close_process (read, write))
-      (Unix.descr_of_in_channel read) in 
+    Lwt_io.of_unix_fd 
+      ~close:(fun () -> Lwt.return @@ ignore (Unix.close_process (read, write)))
+      ~mode:Lwt_io.Input 
+     (Unix.descr_of_in_channel read) in 
   let lwt_write = 
     Lwt_io.of_unix_fd ~mode:Lwt_io.Output (Unix.descr_of_out_channel write) in 
   Lwt.return { 
     reader = lwt_read; writer = lwt_write; 
-    stream = Lwt_stream.from_direct (fun () -> Some "Process started");
+    stream = Lwt_stream.from_direct (fun () -> None);
     status = Success "Process started"; 
   }  
 
-let close t = Lwt_io.close t.reader
+let close t = Lwt_io.close t.reader 
