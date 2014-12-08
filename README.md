@@ -3,11 +3,11 @@
 #### Automate interactive programs with OCaml 
 
 This is a small expect like library intended to be used primarily for 
-interacting with the lindoe lish shell. That does not preclude it from 
-working with other such interactive progams. 
+interacting with Linode's Lish shell. That does not preclude it from 
+working with other such interactive programs. 
 
 The library is designed mostly to be fun to use, it relies on the Lwt
-cooperative thread frame work to handle interacting with the terminal. 
+cooperative thread frame work to handle interacting with an interactive program. 
 
 ```ocaml 
 let result = let open Lwt in 
