@@ -37,7 +37,17 @@ let next_line ?(expect=Any) t =
     >>= fun line -> 
       Lwt.return {t with status = expect_match line expect}
   with Lwt_stream.Empty -> 
-    Lwt.return {t with status = Failure "Empty Stream"}
+    Lwt.return {t with status = Failure "Empty stream"}
+
+let stream ?(expect=Any) t = 
+  let (>>=) = Lwt.bind in 
+  let next ex = next_line ex ~expect in 
+  Lwt_stream.from 
+    (fun () -> next t
+      >>= fun em -> match em.status with 
+      | Failure s when Str.string_match (Str.regexp_string "Empty stream") s 0 -> Lwt.fail Lwt_stream.Empty 
+      | Failure s as o -> Lwt.return @@ Some o
+      | Success s as o -> Lwt.return @@ Some o ) 
 
 let send t ?(expect=Any) str = 
   let (>>=) = Lwt.bind in 
@@ -55,7 +65,7 @@ let spawn process =
   let lwt_write = 
     Lwt_io.of_unix_fd ~mode:Lwt_io.Output (Unix.descr_of_out_channel write) in 
   Lwt.return { 
-    reader = lwt_read; writer = lwt_write; 
+    reader = lwt_read; writer = lwt_write;
     stream = Lwt_stream.from_direct (fun () -> None);
     status = Success "Process started"; 
   }  
