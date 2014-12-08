@@ -1,0 +1,18 @@
+Name: Expectra
+Version: 0.1
+Synopsis: A small expect like library
+Authors: Christopher Bothwell <bothwell.christopher@gmail.com>
+License: LGPL with OCaml linking exception
+Description:  Expectra allows the manipulation of an interactive process 
+  through ocaml, similar to expect. The primary purpose is to aid in the 
+  installation of a mirage kerenl on linode. 
+Homepage: http://christopherbothwell.com 
+
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+
+Library "expectra" 
+  Path: src
+  Modules: Expectra
+  BuildDepends: threads, lwt, unix, str
