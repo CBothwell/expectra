@@ -3,9 +3,9 @@ type status =
   | Failure of string
 
 type matches = 
-  | BeginsWith of string
-  | EndsWith of string 
-  | WithFunction of (string -> status) 
+  | Begins of string
+  | Ends of string 
+  | Function of (string -> status) 
   | Any
 (** matches will use the Str library for BeginsWith and EndsWith to match at the start or end
   * of a string. Any will match all input on a line and is the default. WithFunction provides a way

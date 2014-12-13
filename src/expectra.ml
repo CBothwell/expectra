@@ -3,9 +3,9 @@ type status =
   | Failure of string 
 
 type matches = 
-  | BeginsWith of string
-  | EndsWith of string
-  | WithFunction of (string -> status) 
+  | Begins of string
+  | Ends of string
+  | Function of (string -> status) 
   | Any 
 
 type t = {
@@ -18,17 +18,17 @@ type t = {
 let get_status t = t.status  
 
 let expect_match line = function
-  | BeginsWith regx -> begin 
+  | Begins regx -> begin 
     let re = Str.regexp regx in 
     try ignore(Str.search_forward re line 0); Success (Str.matched_string line) 
     with Not_found -> Failure "Not found" 
   end 
-  | EndsWith regx -> begin
+  | Ends regx -> begin
     let re = Str.regexp regx in 
     try ignore(Str.search_backward re line 0); Success (Str.matched_string line)
     with Not_found -> Failure "Not found" 
   end
-  | WithFunction f -> f line 
+  | Function f -> f line 
   | Any -> Success line 
  
 let next_line ?(expect=Any) t = 
@@ -42,12 +42,17 @@ let next_line ?(expect=Any) t =
 let stream ?(expect=Any) t = 
   let (>>=) = Lwt.bind in 
   let next ex = next_line ex ~expect in 
-  Lwt_stream.from 
-    (fun () -> next t
-      >>= fun em -> match em.status with 
-      | Failure s when Str.string_match (Str.regexp_string "Empty stream") s 0 -> Lwt.fail Lwt_stream.Empty 
-      | Failure s as o -> Lwt.return @@ Some o
-      | Success s as o -> Lwt.return @@ Some o ) 
+  let strm () = 
+    if Lwt.is_sleeping @@ next t then Lwt.return None 
+    else next t 
+      >>= fun em -> 
+        match em.status with 
+        | Failure s when Str.string_match (Str.regexp_string "Empty stream") s 0 -> 
+            Lwt.fail Lwt_stream.Empty 
+        | Failure s as o -> Lwt.return @@ Some o
+        | Success s as o -> Lwt.return @@ Some o
+  in 
+  Lwt_stream.from strm
 
 let send t ?(expect=Any) str = 
   let (>>=) = Lwt.bind in 
@@ -66,7 +71,7 @@ let spawn process =
     Lwt_io.of_unix_fd ~mode:Lwt_io.Output (Unix.descr_of_out_channel write) in 
   Lwt.return { 
     reader = lwt_read; writer = lwt_write;
-    stream = Lwt_stream.from_direct (fun () -> None);
+    stream = Lwt_io.read_lines lwt_read;
     status = Success "Process started"; 
   }  
 
