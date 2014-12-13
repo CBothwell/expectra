@@ -1,6 +1,6 @@
 type status = 
   | Success of string 
-  | Failure of string 
+  | Failure of exn 
 
 type matches = 
   | Begins of string
@@ -16,17 +16,18 @@ type t = {
 }
 
 let get_status t = t.status  
+let set_status t status = {t with status = status}
 
 let expect_match line = function
   | Begins regx -> begin 
     let re = Str.regexp regx in 
     try ignore(Str.search_forward re line 0); Success (Str.matched_string line) 
-    with Not_found -> Failure "Not found" 
+    with Not_found -> Failure Not_found 
   end 
   | Ends regx -> begin
     let re = Str.regexp regx in 
     try ignore(Str.search_backward re line 0); Success (Str.matched_string line)
-    with Not_found -> Failure "Not found" 
+    with Not_found -> Failure Not_found 
   end
   | Function f -> f line 
   | Any -> Success line 
@@ -37,7 +38,7 @@ let next_line ?(expect=Any) t =
     >>= fun line -> 
       Lwt.return {t with status = expect_match line expect}
   with Lwt_stream.Empty -> 
-    Lwt.return {t with status = Failure "Empty stream"}
+    Lwt.return {t with status = Failure Lwt_stream.Empty}
 
 let stream ?(expect=Any) t = 
   let (>>=) = Lwt.bind in 
@@ -47,9 +48,8 @@ let stream ?(expect=Any) t =
     else next t 
       >>= fun em -> 
         match em.status with 
-        | Failure s when Str.string_match (Str.regexp_string "Empty stream") s 0 -> 
-            Lwt.fail Lwt_stream.Empty 
-        | Failure s as o -> Lwt.return @@ Some o
+        | Failure s when s = Lwt_stream.Empty -> Lwt.fail s 
+        | Failure s as o -> Lwt.return @@ Some o 
         | Success s as o -> Lwt.return @@ Some o
   in 
   Lwt_stream.from strm
@@ -75,4 +75,4 @@ let spawn process =
     status = Success "Process started"; 
   }  
 
-let close t = Lwt_io.close t.reader 
+let close t = ignore @@ Lwt_io.close t.reader; Lwt.return t  

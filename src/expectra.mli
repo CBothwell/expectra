@@ -1,6 +1,6 @@
 type status = 
   | Success of string 
-  | Failure of string
+  | Failure of exn
 
 type matches = 
   | Begins of string
@@ -19,6 +19,14 @@ val get_status : t -> status
   * expcetra type without forcing you to deal with the implementation details
   * @param t -> the expectra type
   * @return -> the status of the expectra type *)
+
+val set_status : t -> status -> t 
+(** set status provides a way to set the status of the expectra type. 
+  * this can be used to capture the current line in the status
+  * @param t -> the expectra type
+  * @param status -> a new status
+  * @return -> the new expectra.t *) 
+  
 
 val next_line : ?expect:matches -> t -> t Lwt.t 
 (** next_line gets the next line in interactive programs output
@@ -49,7 +57,7 @@ val spawn : string -> t Lwt.t
   * @param string -> string of a unix command with options
   * @return -> an Lwt thread of the expectra type for interacting with *) 
 
-val close : t -> unit Lwt.t 
+val close : t -> t Lwt.t 
 (** close will terminate the interactive process currently being used. 
   * @param t -> expectra type to terminate connection with 
   * @return -> returns a unit Lwt thread after closing the process and pipe to the process. *) 

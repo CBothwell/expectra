@@ -44,13 +44,19 @@ Exception: Not_found.
 
 (* or more simply *) 
 # let locate ex strm =  Lwt_stream.find (function Expectra.Success _ -> true | Expectra.Failure _ -> false) strm
-    >>= function Some _ -> Lwt.return ex | None -> Lwt.fail Not_found ;;
+    >>= function Some s -> Lwt.return (Expectra.set_status ex s) | None -> Lwt.fail Not_found ;;
 
 # let result = Expectra.spawn "telnet google.com 80" 
     >>= fun ex -> Expectra.send ex "GET / HTTP/1.1\n\n"
     >>= fun ex -> Expectra.stream ex ~expect:(Expectra.Begins "SAME") |> locate ex 
     >>= fun ex -> Expectra.send ex "GET /mail HTTP/1.1\n\n" 
-    >>= fun ex -> Expectra.stream ex ~expect:(Expectra.Begins "301") |> locate ex 
-    >>= fun ex -> Expectra.close ex ;;
+    >>= fun ex -> Expectra.stream ex ~expect:(Expectra.Begins ".*301.*") |> locate ex 
+    >>= fun ex -> Expectra.close ex
+    >>= fun ex -> Expectra.get_status ex |> Lwt.return ;;
+val result : Expectra.status Lwt.t = <abstr> 
+
+# result;;
+- : Expectra.status = Expectra.Success "HTTP/1.1 301 Moved Permanently" 
+
 
 ```
