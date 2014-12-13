@@ -41,4 +41,16 @@ val result : Expectra.status option Lwt.t = <abstr>
 
 # result;;
 Exception: Not_found.                            
+
+(* or more simply *) 
+# let locate ex strm =  Lwt_stream.find (function Expectra.Success _ -> true | Expectra.Failure _ -> false) strm
+    >>= function Some _ -> Lwt.return ex | None -> Lwt.fail Not_found ;;
+
+# let result = Expectra.spawn "telnet google.com 80" 
+    >>= fun ex -> Expectra.send ex "GET / HTTP/1.1\n\n"
+    >>= fun ex -> Expectra.stream ex ~expect:(Expectra.Begins "SAME") |> locate ex 
+    >>= fun ex -> Expectra.send ex "GET /mail HTTP/1.1\n\n" 
+    >>= fun ex -> Expectra.stream ex ~expect:(Expectra.Begins "301") |> locate ex 
+    >>= fun ex -> Expectra.close ex ;;
+
 ```
