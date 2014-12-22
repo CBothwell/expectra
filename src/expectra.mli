@@ -7,8 +7,8 @@ type matches =
   | Ends of string 
   | Function of (string -> status) 
   | Any
-(** matches will use the Str library for BeginsWith and EndsWith to match at the start or end
-  * of a string. Any will match all input on a line and is the default. WithFunction provides a way
+(** matches will use the Str library for Begins and Ends to match at the start or end
+  * of a string. Any will match all input on a line and is the default. Function provides a way
   * to exend how matches can be done with a function. If you need to use a differnt regular expression library, 
   * or if you have special needs when matching a line this will provide you that capability. *) 
 
@@ -29,7 +29,8 @@ val set_status : t -> status -> t
   
 
 val next_line : ?expect:matches -> t -> t Lwt.t 
-(** next_line gets the next line in interactive programs output
+(** next_line gets the next line in interactive programs output. In 
+  * general you should be using stream as it is a much easier interface. 
   * @param ?expect -> expect takes an optional matches argument to match the 
   *                  line agaisnt. 
   * @param t -> the expectra type 
@@ -60,4 +61,5 @@ val spawn : string -> t Lwt.t
 val close : t -> t Lwt.t 
 (** close will terminate the interactive process currently being used. 
   * @param t -> expectra type to terminate connection with 
-  * @return -> returns a unit Lwt thread after closing the process and pipe to the process. *) 
+  * @return -> returns an expectra Lwt thread after closing the process and pipe to the process.
+  *            this will allow you to access the status after interaction is complete.  *) 

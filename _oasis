@@ -15,4 +15,4 @@ Plugins: META (0.4), DevFiles (0.4)
 Library "expectra" 
   Path: src
   Modules: Expectra
-  BuildDepends: threads, lwt, unix, str
+  BuildDepends: threads, lwt, unix, str, fd-send-recv, ctypes.foreign
