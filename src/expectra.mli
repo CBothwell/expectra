@@ -36,7 +36,7 @@ val next_line : ?expect:matches -> t -> t Lwt.t
   * @param t -> the expectra type 
   * @return -> an Lwt thread containing the next expectra type *)
 
-val stream : ?expect:matches -> t -> status Lwt_stream.t 
+val stream : ?expect:matches -> t -> string Lwt_stream.t 
 (** stream gives you access to an Lwt_stream of the results returned by 
   * send. This gives you a way to interact with the output using the 
   * Lwt_stream functions. 
